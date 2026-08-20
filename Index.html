@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanner Presensi MI Al Hidayah</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #eef2f5; margin: 0; padding: 20px; text-align: center; }
+    .card { max-width: 420px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    h2 { color: #1e293b; margin-top: 0; }
+    p { color: #64748b; font-size: 14px; }
+    #reader { width: 100%; border-radius: 10px; overflow: hidden; margin-top: 15px; }
+    #status { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: bold; display: none; }
+    .success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>📷 Pemindai Presensi</h2>
+    <p>MI Al Hidayah Kalitlawah</p>
+    
+    <div id="reader"></div>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // ⚠️ GANTI URL DI BAWAH INI DENGAN URL WEB APP /exec APPS SCRIPT ANDA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwM8ILIqBgHp0ZMF8WEDxPdMWcbS37-ueyReOyN3C46brH6b0eT3IvcuosW9itZqeqm/exec";
+
+    let isProcessing = false;
+
+    function onScanSuccess(decodedText) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      showStatus("⏳ Memproses data presensi...", "success");
+
+      // Kirim data QR ke Google Apps Script via HTTP POST
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ qrData: decodedText })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showStatus(data.message, "success");
+        } else {
+          showStatus(data.message, "error");
+        }
+        setTimeout(() => { resetStatus(); }, 3500);
+      })
+      .catch(err => {
+        showStatus("❌ Gagal terhubung ke server Google", "error");
+        setTimeout(() => { resetStatus(); }, 3500);
+      });
+    }
+
+    function showStatus(msg, type) {
+      const box = document.getElementById("status");
+      box.className = type;
+      box.innerText = msg;
+      box.style.display = "block";
+    }
+
+    function resetStatus() {
+      document.getElementById("status").style.display = "none";
+      isProcessing = false;
+    }
+
+    // Inisialisasi Scanner Kamera Langsung (Akan Langsung Meminta Akses Kamera)
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: { width: 220, height: 220 } }, 
+      false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+
+</body>
+</html>
