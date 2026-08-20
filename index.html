@@ -39,7 +39,7 @@
 
       fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "cors",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({ qrData: decodedText })
       })
